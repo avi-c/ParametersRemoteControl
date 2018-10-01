@@ -55,8 +55,6 @@ class RemoteParameterSession: NSObject, MCSessionDelegate, MCNearbyServiceBrowse
         } else {
             print("Advertising \(myself.peerID)")
         }
-
-
     }
 
     func startBrowsing() {
@@ -121,10 +119,6 @@ class RemoteParameterSession: NSObject, MCSessionDelegate, MCNearbyServiceBrowse
         print("session with peer: \(peerID) didChange: \(state == .connected)")
     }
 
-    func sendUpdatedTweaks() {
-
-    }
-
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         do {
             let tweaks = try JSONDecoder().decode(Array<CodeableTweak>.self, from:data)
@@ -143,13 +137,13 @@ class RemoteParameterSession: NSObject, MCSessionDelegate, MCNearbyServiceBrowse
                         let newTweak = Tweak(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, tweakData.boolValue)
                         allTweaks.append(newTweak)
                     case .integer:
-                        let newTweak = Tweak<Int>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, tweakData.intValue)
+                        let newTweak = Tweak<Int>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, defaultValue: tweakData.intValue, min: tweakData.intMinValue, max: tweakData.intMaxValue, stepSize: tweakData.intStepValue)
                         allTweaks.append(newTweak)
                     case .cgFloat:
-                        let newTweak = Tweak<CGFloat>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, tweakData.cgFloatValue)
+                        let newTweak = Tweak<CGFloat>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, defaultValue: tweakData.cgFloatValue, min: tweakData.cgFloatMinValue, max: tweakData.cgFloatMaxValue, stepSize: tweakData.cgFloatStepValue)
                         allTweaks.append(newTweak)
                     case .double:
-                        let newTweak = Tweak<Double>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, tweakData.doubleValue)
+                        let newTweak = Tweak<Double>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, defaultValue: tweakData.doubleValue, min: tweakData.doubleMinValue, max: tweakData.doubleMaxValue, stepSize: tweakData.doubleStepValue)
                         allTweaks.append(newTweak)
                     case .string:
                         let newTweak = Tweak<String>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, tweakData.stringValue)
@@ -183,9 +177,9 @@ class RemoteParameterSession: NSObject, MCSessionDelegate, MCNearbyServiceBrowse
         if let tweakStore = tweakStore {
             // show parameters UI
             DispatchQueue.main.async {
-                if let window = UIApplication.shared.windows.first {
+                if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
                     self.tweaksViewController = TweaksViewController(tweakStore: tweakStore, delegate: self)
-                    window.rootViewController?.present(self.tweaksViewController!, animated: true, completion: nil)
+                    appDelegate.navigationController?.present(self.tweaksViewController!, animated: true, completion: nil)
                 }
             }
         }

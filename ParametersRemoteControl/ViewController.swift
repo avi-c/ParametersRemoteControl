@@ -13,11 +13,14 @@ class ViewController: UIViewController {
     var myself: RemoteParameterReceiver? = nil
     var remoteSession: RemoteParameterSession? = nil
 
+    var browserViewController: ParameterServerBrowserViewController = ParameterServerBrowserViewController()
+
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        self.view.backgroundColor = UIColor.brown
         myself = RemoteParameterReceiver.init(username: "RemoteControl")
-        remoteSession = RemoteParameterSession.init(myself: myself!)
+        self.navigationController?.pushViewController(self.browserViewController, animated: false)
+        self.remoteSession = RemoteParameterSession.init(myself: self.myself!)
     }
 }
 

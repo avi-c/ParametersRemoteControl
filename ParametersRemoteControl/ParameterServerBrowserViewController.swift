@@ -13,6 +13,9 @@ class ParameterServerBrowserViewController: UIViewController, UITableViewDataSou
     let tableView: UITableView = UITableView()
     var receivers: [RemoteParameterReceiver] = [RemoteParameterReceiver]()
 
+    var myself: RemoteParameterReceiver? = nil
+    var remoteSession: RemoteParameterSession? = nil
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -30,6 +33,9 @@ class ParameterServerBrowserViewController: UIViewController, UITableViewDataSou
         tableView.delegate = self
         tableView.layer.cornerRadius = 10
         tableView.clipsToBounds = true
+
+        myself = RemoteParameterReceiver.init(username: "RemoteControl")
+        self.remoteSession = RemoteParameterSession.init(myself: self.myself!)
     }
     
     // MARK UITableViewDataSource

@@ -13,9 +13,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
+    public var navigationController: UINavigationController? = nil
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
+
+        window = UIWindow(frame: UIScreen.main.bounds)
+
+        let homeViewController = ParameterServerBrowserViewController()
+        homeViewController.title = "Browser"
+
+        navigationController = UINavigationController(rootViewController: homeViewController)
+        window?.rootViewController = navigationController
+        window?.makeKeyAndVisible()
+
         return true
     }
 
