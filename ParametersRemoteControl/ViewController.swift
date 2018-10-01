@@ -12,7 +12,7 @@ class ViewController: UIViewController {
 
     var myself: RemoteParameterReceiver? = nil
     var remoteSession: RemoteParameterSession? = nil
-
+    var remoteServerBrowser: RemoteParameterServerBrowser? = nil
     var browserViewController: ParameterServerBrowserViewController = ParameterServerBrowserViewController()
 
     override func viewDidLoad() {
@@ -21,6 +21,8 @@ class ViewController: UIViewController {
         myself = RemoteParameterReceiver.init(username: "RemoteControl")
         self.navigationController?.pushViewController(self.browserViewController, animated: false)
         self.remoteSession = RemoteParameterSession.init(myself: self.myself!)
+        self.remoteServerBrowser = RemoteParameterServerBrowser.init(myself: self.myself!)
+        self.remoteServerBrowser?.startBrowsing()
     }
 }
 
