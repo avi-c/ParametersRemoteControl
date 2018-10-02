@@ -85,53 +85,25 @@ class ParameterServerBrowserViewController: UIViewController, UITableViewDataSou
             let tweaks = try JSONDecoder().decode(Array<CodeableTweak>.self, from:data)
             print("\(tweaks)")
 
-            if tweakStore == nil {
-                var allTweaks = [TweakClusterType]()
+            let allTweaks = self.createTweaksFromDecodedTweaks(decodedTweaks: tweaks)
+            self.updateCurrentTweakValues(decodedTweaks: tweaks)
 
-                for tweakData in tweaks {
-                    // pull out the values we need an instantiate a Tweak for this
-                    let dataType: TweakViewDataType = TweakViewDataType.init(rawValue: tweakData.tweakType)!
-
-                    switch dataType {
-                    case .boolean:
-                        let newTweak = Tweak(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, tweakData.boolValue)
-                        allTweaks.append(newTweak)
-                    case .integer:
-                        let newTweak = Tweak<Int>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, defaultValue: tweakData.intValue, min: tweakData.intMinValue, max: tweakData.intMaxValue, stepSize: tweakData.intStepValue)
-                        allTweaks.append(newTweak)
-                    case .cgFloat:
-                        let newTweak = Tweak<CGFloat>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, defaultValue: tweakData.cgFloatValue, min: tweakData.cgFloatMinValue, max: tweakData.cgFloatMaxValue, stepSize: tweakData.cgFloatStepValue)
-                        allTweaks.append(newTweak)
-                    case .double:
-                        let newTweak = Tweak<Double>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, defaultValue: tweakData.doubleValue, min: tweakData.doubleMinValue, max: tweakData.doubleMaxValue, stepSize: tweakData.doubleStepValue)
-                        allTweaks.append(newTweak)
-                    case .string:
-                        let newTweak = Tweak<String>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, tweakData.stringValue)
-                        allTweaks.append(newTweak)
-                    default:
-                        print("Unsupported tweak type: \(dataType)")
-                    }
-                }
-                tweakStore = TweakStore(tweaks: allTweaks, enabled: true)
-
-                let multipleBinding = tweakStore?.bindMultiple(allTweaks as! [TweakType]) {
-                    // for now we'll just send the current state of all the tweaks, not checking which ones have been updated
-                    let array = Array(self.tweakStore!.allTweaks)
-                    if let data = self.serializeTweaks(tweaks: array) {
-                        print("\(data.count)")
-                        // transmit data
-                        if let connectedPeer = self.connectedPeer {
-                            do {
-                                try self.remoteSession?.session.send(data, toPeers: [connectedPeer.host.peerID], with: .unreliable)
-                            }
-                            catch let error {
-                                NSLog("%@", "Error for sending: \(error)")
-                            }
+            let multipleBinding = tweakStore?.bindMultiple(allTweaks as! [TweakType]) {
+                // for now we'll just send the current state of all the tweaks, not checking which ones have been updated
+                if let data = self.tweakStore!.serializeTweaks() {
+                    print("\(data.count)")
+                    // transmit data
+                    if let connectedPeer = self.connectedPeer {
+                        do {
+                            try self.remoteSession?.session.send(data, toPeers: [connectedPeer.host.peerID], with: .unreliable)
+                        }
+                        catch let error {
+                            NSLog("%@", "Error for sending: \(error)")
                         }
                     }
                 }
-                multiTweakBindings.insert(multipleBinding!)
             }
+            multiTweakBindings.insert(multipleBinding!)
         } catch {
             print("deserialization error: \(error)")
         }
@@ -147,34 +119,68 @@ class ParameterServerBrowserViewController: UIViewController, UITableViewDataSou
         }
     }
 
-    private func serializeTweaks(tweaks: [AnyTweak]) -> Data? {
-        guard let tweakStore = tweakStore else { return nil }
-        var tweakInfo = [CodeableTweak]()
+    private func updateCurrentTweakValues(decodedTweaks: [CodeableTweak]) -> Void {
+        if let tweakStore = tweakStore {
+            for tweakData in decodedTweaks {
+                if let matchingTweak = tweakStore.allTweaks.first(where: { (localTweak) -> Bool in
+                    return localTweak.tweakName == tweakData.tweakName
+                }) {
+                    // pull out the values we need an instantiate a Tweak for this
+                    let dataType: TweakViewDataType = TweakViewDataType.init(rawValue: tweakData.tweakType)!
 
-        for tweak in tweaks {
-            var codedTweak = CodeableTweak(tweak: tweak)
-            if tweak.tweakViewDataType == .cgFloat {
-                let tweakInstance = tweak.tweak as! Tweak<CGFloat>
-                codedTweak.cgFloatValue = tweakStore.assign(tweakInstance)
-            } else if tweak.tweakViewDataType == .double {
-                let tweakInstance = tweak.tweak as! Tweak<Double>
-                codedTweak.doubleValue = tweakStore.assign(tweakInstance)
-            } else if tweak.tweakViewDataType == .integer {
-                let tweakInstance = tweak.tweak as! Tweak<Int>
-                codedTweak.intValue = tweakStore.assign(tweakInstance)
-            } else if tweak.tweakViewDataType == .boolean {
-                let tweakInstance = tweak.tweak as! Tweak<Bool>
-                codedTweak.boolValue = tweakStore.assign(tweakInstance)
-            } else if tweak.tweakViewDataType == .string {
-                let tweakInstance = tweak.tweak as! Tweak<String>
-                codedTweak.stringValue = tweakStore.assign(tweakInstance)
+                    switch dataType {
+                    case .boolean:
+                        tweakStore.setValue(tweakData.boolValue, forTweak: matchingTweak)
+                    case .integer:
+                        tweakStore.setValue(tweakData.intValue, forTweak: matchingTweak)
+                    case .cgFloat:
+                        tweakStore.setValue(tweakData.cgFloatValue, forTweak: matchingTweak)
+                    case .double:
+                        tweakStore.setValue(tweakData.doubleValue, forTweak: matchingTweak)
+                    case .string:
+                        tweakStore.setValue(tweakData.stringValue, forTweak: matchingTweak)
+                    default:
+                        print("Unsupported tweak type: \(dataType)")
+                    }
+                }
             }
-            tweakInfo.append(codedTweak)
+        }
+    }
+
+    private func createTweaksFromDecodedTweaks(decodedTweaks: [CodeableTweak]) -> [TweakClusterType] {
+        var allTweaks = [TweakClusterType]()
+
+        if tweakStore == nil {
+            for tweakData in decodedTweaks {
+                // pull out the values we need and instantiate a Tweak for this
+                let dataType: TweakViewDataType = TweakViewDataType.init(rawValue: tweakData.tweakType)!
+
+                switch dataType {
+                case .boolean:
+                    let newTweak = Tweak(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, tweakData.boolValue)
+                    allTweaks.append(newTweak)
+                case .integer:
+                    let newTweak = Tweak<Int>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, defaultValue: tweakData.intDefaultValue, min: tweakData.intMinValue, max: tweakData.intMaxValue, stepSize: tweakData.intStepValue)
+                    allTweaks.append(newTweak)
+                case .cgFloat:
+                    let newTweak = Tweak<CGFloat>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, defaultValue: tweakData.cgFloatDefaultValue, min: tweakData.cgFloatMinValue, max: tweakData.cgFloatMaxValue, stepSize: tweakData.cgFloatStepValue)
+                    allTweaks.append(newTweak)
+                case .double:
+                    let newTweak = Tweak<Double>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, defaultValue: tweakData.doubleDefaultValue, min: tweakData.doubleMinValue, max: tweakData.doubleMaxValue, stepSize: tweakData.doubleStepValue)
+                    allTweaks.append(newTweak)
+                case .string:
+                    let newTweak = Tweak<String>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, tweakData.stringValue)
+                    allTweaks.append(newTweak)
+                default:
+                    print("Unsupported tweak type: \(dataType)")
+                }
+            }
+
+            tweakStore = TweakStore(tweaks: allTweaks, enabled: true)
+            self.updateCurrentTweakValues(decodedTweaks: decodedTweaks)
         }
 
-        let encodedData = try? JSONEncoder().encode(tweakInfo)
-
-        return encodedData
+        return allTweaks
     }
 
     func parameterServerBrowser(_ browser: RemoteParameterServerBrowser, sawServers: [ParameterServer]) {
