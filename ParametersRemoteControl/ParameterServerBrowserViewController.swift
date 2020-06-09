@@ -7,11 +7,13 @@
 //
 
 import MultipeerConnectivity
-import SwiftTweaks
+import RemoteParameters
+import Parameters
 import UIKit
 
-class ParameterServerBrowserViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, RemoteParameterServerBrowserDelegate, RemoteParameterSessionDelegate, TweaksViewControllerDelegate {
+class ParameterServerBrowserViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, RemoteParameterServerBrowserDelegate, RemoteParameterSessionDelegate {
 
+    let observerIdentifier = UUID()
     let tableView: UITableView = UITableView()
     var servers: [ParameterServer] = [ParameterServer]()
 
@@ -20,9 +22,9 @@ class ParameterServerBrowserViewController: UIViewController, UITableViewDataSou
     var remoteServerBrowser: RemoteParameterServerBrowser? = nil
 
     private var connectedPeer: ParameterServer? = nil
-    private var tweaksViewController: TweaksViewController? = nil
-    private var tweakStore: TweakStore? = nil
-    private var multiTweakBindings = Set<MultiTweakBindingIdentifier>()
+    private var parametersViewController: UINavigationController? = nil
+
+    private var parameterSet: ParameterSet?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -82,105 +84,40 @@ class ParameterServerBrowserViewController: UIViewController, UITableViewDataSou
 
     func session(_ session: RemoteParameterSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         do {
-            let tweaks = try JSONDecoder().decode(Array<CodeableTweak>.self, from:data)
-            print("\(tweaks)")
+            let decodedParameterSet = try JSONDecoder().decode(ParameterSet.self, from: data)
 
-            let allTweaks = self.createTweaksFromDecodedTweaks(decodedTweaks: tweaks)
-            self.updateCurrentTweakValues(decodedTweaks: tweaks)
+            // sign up for change observation
+            decodedParameterSet.allParameters.forEach { parameter in
+                parameter.add(observer: self)
+            }
 
-            let multipleBinding = tweakStore?.bindMultiple(allTweaks as! [TweakType]) {
-                // for now we'll just send the current state of all the tweaks, not checking which ones have been updated
-                if let data = self.tweakStore!.serializeTweaks() {
-                    print("\(data.count)")
-                    // transmit data
-                    if let connectedPeer = self.connectedPeer {
-                        do {
-                            try self.remoteSession?.session.send(data, toPeers: [connectedPeer.host.peerID], with: .unreliable)
-                        }
-                        catch let error {
-                            NSLog("%@", "Error for sending: \(error)")
-                        }
-                    }
+            self.parameterSet = decodedParameterSet
+            // show parameters UI
+            DispatchQueue.main.async {
+                let paramsVC = ParametersViewController()
+                paramsVC.parameters = decodedParameterSet.categories
+                paramsVC.parametersViewControllerDelegate = self
+                paramsVC.title = "Settings"
+                paramsVC.navigationItem.rightBarButtonItem = UIBarButtonItem.init(barButtonSystemItem: .done, target: self, action: #selector(self.doneWasTapped))
+
+                let settingsNavigationController = UINavigationController(rootViewController: paramsVC)
+                settingsNavigationController.isToolbarHidden = false
+
+                 self.parametersViewController = settingsNavigationController
+
+                // show the parameters view controller
+
+                if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
+                    appDelegate.navigationController?.present(settingsNavigationController, animated: true, completion: nil)
                 }
             }
-            multiTweakBindings.insert(multipleBinding!)
         } catch {
             print("deserialization error: \(error)")
         }
-
-        if let tweakStore = tweakStore {
-            // show parameters UI
-            DispatchQueue.main.async {
-                if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
-                    self.tweaksViewController = TweaksViewController(tweakStore: tweakStore, delegate: self)
-                    appDelegate.navigationController?.present(self.tweaksViewController!, animated: true, completion: nil)
-                }
-            }
-        }
     }
 
-    private func updateCurrentTweakValues(decodedTweaks: [CodeableTweak]) -> Void {
-        if let tweakStore = tweakStore {
-            for tweakData in decodedTweaks {
-                if let matchingTweak = tweakStore.allTweaks.first(where: { (localTweak) -> Bool in
-                    return localTweak.tweakName == tweakData.tweakName
-                }) {
-                    // pull out the values we need an instantiate a Tweak for this
-                    let dataType: TweakViewDataType = TweakViewDataType.init(rawValue: tweakData.tweakType)!
-
-                    switch dataType {
-                    case .boolean:
-                        tweakStore.setValue(tweakData.boolValue, forTweak: matchingTweak)
-                    case .integer:
-                        tweakStore.setValue(tweakData.intValue, forTweak: matchingTweak)
-                    case .cgFloat:
-                        tweakStore.setValue(tweakData.cgFloatValue, forTweak: matchingTweak)
-                    case .double:
-                        tweakStore.setValue(tweakData.doubleValue, forTweak: matchingTweak)
-                    case .string:
-                        tweakStore.setValue(tweakData.stringValue, forTweak: matchingTweak)
-                    default:
-                        print("Unsupported tweak type: \(dataType)")
-                    }
-                }
-            }
-        }
-    }
-
-    private func createTweaksFromDecodedTweaks(decodedTweaks: [CodeableTweak]) -> [TweakClusterType] {
-        var allTweaks = [TweakClusterType]()
-
-        if tweakStore == nil {
-            for tweakData in decodedTweaks {
-                // pull out the values we need and instantiate a Tweak for this
-                let dataType: TweakViewDataType = TweakViewDataType.init(rawValue: tweakData.tweakType)!
-
-                switch dataType {
-                case .boolean:
-                    let newTweak = Tweak(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, tweakData.boolValue)
-                    allTweaks.append(newTweak)
-                case .integer:
-                    let newTweak = Tweak<Int>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, defaultValue: tweakData.intDefaultValue, min: tweakData.intMinValue, max: tweakData.intMaxValue, stepSize: tweakData.intStepValue)
-                    allTweaks.append(newTweak)
-                case .cgFloat:
-                    let newTweak = Tweak<CGFloat>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, defaultValue: tweakData.cgFloatDefaultValue, min: tweakData.cgFloatMinValue, max: tweakData.cgFloatMaxValue, stepSize: tweakData.cgFloatStepValue)
-                    allTweaks.append(newTweak)
-                case .double:
-                    let newTweak = Tweak<Double>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, defaultValue: tweakData.doubleDefaultValue, min: tweakData.doubleMinValue, max: tweakData.doubleMaxValue, stepSize: tweakData.doubleStepValue)
-                    allTweaks.append(newTweak)
-                case .string:
-                    let newTweak = Tweak<String>(tweakData.collectionName, tweakData.groupName, tweakData.tweakName, tweakData.stringValue)
-                    allTweaks.append(newTweak)
-                default:
-                    print("Unsupported tweak type: \(dataType)")
-                }
-            }
-
-            tweakStore = TweakStore(tweaks: allTweaks, enabled: true)
-            self.updateCurrentTweakValues(decodedTweaks: decodedTweaks)
-        }
-
-        return allTweaks
+    @objc private func doneWasTapped() {
+        parametersViewController?.dismiss(animated: true, completion: nil)
     }
 
     func parameterServerBrowser(_ browser: RemoteParameterServerBrowser, sawServers: [ParameterServer]) {
@@ -191,9 +128,9 @@ class ParameterServerBrowserViewController: UIViewController, UITableViewDataSou
     func parameterServerBrowser(_ browser: RemoteParameterServerBrowser, lostServers: [ParameterServer]) {
         for server in lostServers {
             self.servers = self.servers.filter { $0.host.peerID != server.host.peerID }
-            if let connectedPeer = self.connectedPeer, let tweaksViewController = self.tweaksViewController {
-                if connectedPeer.host.peerID == server.host.peerID {
-                    tweaksViewController.dismiss(animated: true, completion: nil)
+            if let connectedPeer = self.connectedPeer, connectedPeer.host.peerID == server.host.peerID {
+                if let parametersViewController = parametersViewController {
+                    parametersViewController.dismiss(animated: true, completion: nil)
                 }
             }
         }
@@ -201,11 +138,41 @@ class ParameterServerBrowserViewController: UIViewController, UITableViewDataSou
         tableView.reloadData()
     }
 
-    func tweaksViewControllerRequestsDismiss(_ tweaksViewController: TweaksViewController, completion: (() -> ())?) {
-        multiTweakBindings.removeAll()
-        self.tweaksViewController?.dismiss(animated: true, completion: nil)
-        self.tweaksViewController = nil
-        self.connectedPeer = nil
-        self.remoteSession?.session.disconnect()
+    func transmitParameters() {
+        if let session = remoteSession?.session, let encodedData = try? JSONEncoder().encode(self.parameterSet) {
+            do {
+                try session.send(encodedData, toPeers: session.connectedPeers, with: .unreliable)
+            } catch let error {
+                NSLog("%@", "Error for sending: \(error)")
+            }
+        }
+    }
+}
+
+extension ParameterServerBrowserViewController: ParameterObserver {
+    var identifier: String {
+        observerIdentifier.uuidString
+    }
+
+    func didUpdate(parameter: Parameter) {
+        transmitParameters()
+    }
+}
+
+extension ParameterServerBrowserViewController: ParametersViewControllerDelegate {
+    func willAppear(parametersViewController: ParametersViewController) {
+    }
+
+    func didAppear(parametersViewController: ParametersViewController) {
+    }
+
+    func willDisappear(parametersViewController: ParametersViewController) {
+    }
+
+    func didDisappear(parametersViewController: ParametersViewController) {
+        parameterSet?.allParameters.forEach { parameter in
+            parameter.remove(observer: self)
+        }
+        self.parametersViewController = nil
     }
 }

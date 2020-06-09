@@ -12,12 +12,13 @@
 		F4446D642151903400D15566 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F4446D622151903400D15566 /* Main.storyboard */; };
 		F4446D662151903600D15566 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F4446D652151903600D15566 /* Assets.xcassets */; };
 		F4446D692151903600D15566 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F4446D672151903600D15566 /* LaunchScreen.storyboard */; };
-		F4446D72215191F200D15566 /* SwiftTweaks.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4446D71215191F200D15566 /* SwiftTweaks.framework */; };
 		F4446D742151B69E00D15566 /* ParameterServerBrowserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4446D732151B69E00D15566 /* ParameterServerBrowserViewController.swift */; };
 		F4446D762151B7AC00D15566 /* ParameterServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4446D752151B7AC00D15566 /* ParameterServer.swift */; };
 		F4446D782151B7F600D15566 /* RemoteParameterReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4446D772151B7F600D15566 /* RemoteParameterReceiver.swift */; };
 		F4446D7A2151BCDA00D15566 /* RemoteParameterSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4446D792151BCDA00D15566 /* RemoteParameterSession.swift */; };
 		F4446D7C2151BD2C00D15566 /* RemoteParameters.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4446D7B2151BD2C00D15566 /* RemoteParameters.swift */; };
+		F474ED81248AB64600F7A9A5 /* RemoteParameters.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F474ED7F248AB64600F7A9A5 /* RemoteParameters.framework */; };
+		F474ED82248AB64600F7A9A5 /* Parameters.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F474ED80248AB64600F7A9A5 /* Parameters.framework */; };
 		F4B6F3902162DB44007B927E /* RemoteParameterServerBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B6F38F2162DB44007B927E /* RemoteParameterServerBrowser.swift */; };
 /* End PBXBuildFile section */
 
@@ -29,12 +30,13 @@
 		F4446D652151903600D15566 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F4446D682151903600D15566 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		F4446D6A2151903600D15566 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		F4446D71215191F200D15566 /* SwiftTweaks.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftTweaks.framework; path = Carthage/Build/iOS/SwiftTweaks.framework; sourceTree = SOURCE_ROOT; };
 		F4446D732151B69E00D15566 /* ParameterServerBrowserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParameterServerBrowserViewController.swift; sourceTree = "<group>"; };
 		F4446D752151B7AC00D15566 /* ParameterServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParameterServer.swift; sourceTree = "<group>"; };
 		F4446D772151B7F600D15566 /* RemoteParameterReceiver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteParameterReceiver.swift; sourceTree = "<group>"; };
 		F4446D792151BCDA00D15566 /* RemoteParameterSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteParameterSession.swift; sourceTree = "<group>"; };
 		F4446D7B2151BD2C00D15566 /* RemoteParameters.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RemoteParameters.swift; sourceTree = "<group>"; };
+		F474ED7F248AB64600F7A9A5 /* RemoteParameters.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = RemoteParameters.framework; path = Carthage/Build/iOS/RemoteParameters.framework; sourceTree = SOURCE_ROOT; };
+		F474ED80248AB64600F7A9A5 /* Parameters.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Parameters.framework; path = Carthage/Build/iOS/Parameters.framework; sourceTree = SOURCE_ROOT; };
 		F4B6F38F2162DB44007B927E /* RemoteParameterServerBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteParameterServerBrowser.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -43,7 +45,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F4446D72215191F200D15566 /* SwiftTweaks.framework in Frameworks */,
+				F474ED82248AB64600F7A9A5 /* Parameters.framework in Frameworks */,
+				F474ED81248AB64600F7A9A5 /* RemoteParameters.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -69,11 +72,12 @@
 		F4446D5D2151903400D15566 /* ParametersRemoteControl */ = {
 			isa = PBXGroup;
 			children = (
+				F474ED80248AB64600F7A9A5 /* Parameters.framework */,
+				F474ED7F248AB64600F7A9A5 /* RemoteParameters.framework */,
 				F4446D7B2151BD2C00D15566 /* RemoteParameters.swift */,
 				F4446D792151BCDA00D15566 /* RemoteParameterSession.swift */,
 				F4446D772151B7F600D15566 /* RemoteParameterReceiver.swift */,
 				F4B6F38F2162DB44007B927E /* RemoteParameterServerBrowser.swift */,
-				F4446D71215191F200D15566 /* SwiftTweaks.framework */,
 				F4446D5E2151903400D15566 /* AppDelegate.swift */,
 				F4446D602151903400D15566 /* ViewController.swift */,
 				F4446D732151B69E00D15566 /* ParameterServerBrowserViewController.swift */,
@@ -162,12 +166,12 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Carthage/Build/iOS/SwiftTweaks.framework",
+				"$(SRCROOT)/Carthage/Build/iOS/Parameters.framework",
+				"$(SRCROOT)/Carthage/Build/iOS/RemoteParameters.framework",
 			);
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(BUILT_PRODUCTS_DIR)/$(FRAMEWORKS_FOLDER_PATH)/SwiftTweaks.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -334,7 +338,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = JVL9YPNS8B;
+				DEVELOPMENT_TEAM = GJZR2MEM28;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Carthage/Build/iOS",
@@ -356,7 +360,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = JVL9YPNS8B;
+				DEVELOPMENT_TEAM = GJZR2MEM28;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)/Carthage/Build/iOS",

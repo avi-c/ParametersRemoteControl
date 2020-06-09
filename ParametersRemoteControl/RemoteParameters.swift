@@ -9,7 +9,7 @@
 import Foundation
 
 struct RemoteParameterService {
-    static let serverService = "ardesign-p"
+    static let serverService = "mbxremoteparam"
     static let spectatorService = "ardesign-s"
 }
 
